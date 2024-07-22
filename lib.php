@@ -80,7 +80,82 @@ class gradingcustomchatgpt {
         }
     }
 
-    // evaluate with chat gpt disini
+   
+    protected function evaluate_with_chatgpt($question, $answer) {
+
+        function parse_env_file($path) {
+            $vars = [];
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                if (strpos($line, '=') === false) {
+                    continue;
+                }
+                list($key, $value) = explode('=', $line, 2);
+                $vars[trim($key)] = trim($value);
+            }
+            return $vars;
+        }
+    
+        // Path to your .env file
+        $env_file_path = __DIR__ . '/.env';
+
+        // Load environment variables from .env file
+        $env_vars = parse_env_file($env_file_path);
+
+        // Access the API key
+        $api_key = $env_vars['OPENAI_API_KEY'] ?? '';
+
+        if (!$api_key) {
+            die("API key tidak ditemukan dalam file .env.");
+        }
+        $url = 'https://api.openai.com/v1/chat/completions'; // Ensure the correct endpoint for chat completion
+        
+        $messages = [
+            ["role" => "system", "content" => "You are a helpful assistant that grades essay answers."],
+            ["role" => "user", "content" => "Pertanyaan: $question\nJawaban: $answer\n\nBerikan penilaian (1-100) untuk jawaban ini dan berikan umpan balik:"]
+        ];
+        
+        $data = array(
+            'model' => 'gpt-3.5-turbo',
+            'messages' => $messages,
+            'max_tokens' => 150,
+            'temperature' => 0.7,
+            'top_p' => 1.0
+        );
+    
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json'
+        ));
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    
+        $response = curl_exec($ch);
+        if(curl_errno($ch)) {
+            error_log('Curl error: ' . curl_error($ch));
+        }
+        curl_close($ch);
+    
+        $response_data = json_decode($response, true);
+        if (isset($response_data['choices'][0]['message']['content'])) {
+            $text = $response_data['choices'][0]['message']['content'];
+            list($grade_str, $feedback) = explode("\n", trim($text), 2);
+            $grade = (int) filter_var($grade_str, FILTER_SANITIZE_NUMBER_INT);
+    
+            return array(
+                'grade' => $grade,
+                'feedback' => $feedback
+            );
+        } else {
+            error_log('Error: ' . print_r($response_data, true));
+            return array(
+                'grade' => 0,
+                'feedback' => 'Evaluation failed.'
+            );
+        }
+    }
     
     protected function save_chatgpt_grades($question_attempt_id, $question_id, $user_id, $grade, $feedback) {
         global $DB;
