@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/quiz/report/gradingcustomchatgpt/db" VERSION="2024072200" COMMENT="XMLDB file for Moodle quiz_gradingcustomchatgpt plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+
+    <TABLES>
+    <!-- Tabel ChatGPT Grades -->
+        <TABLE NAME="gradingform_chatgptgrades" COMMENT="Grading information provided by ChatGPT for essay questions submissions.">
+        <FIELDS>
+            <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key for the chatgpt_grades table."/>
+            <FIELD NAME="question_attempt_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key linking to mdl_question_attempts.id"/>
+            <FIELD NAME="question_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key linking to mdl_question.id"/>
+            <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key linking to mdl_user.id"/>
+            <FIELD NAME="grade_chatgpt" TYPE="number" LENGTH="10" DECIMALS="5" NOTNULL="true" SEQUENCE="false" COMMENT="Grade given by ChatGPT for the answer"/>
+            <FIELD NAME="chatgpt_response" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Feedback or comments from ChatGPT"/>
+            <FIELD NAME="timestamp" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp of when the grading was done"/>
+        </FIELDS>
+        <KEYS>
+            <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for this table."/>
+            <KEY NAME="question_attempt_fk" TYPE="foreign" FIELDS="question_attempt_id" REFTABLE="question_attempts" REFFIELDS="id" COMMENT="Foreign key to question_attempts table."/>
+            <KEY NAME="question_fk" TYPE="foreign" FIELDS="question_id" REFTABLE="question" REFFIELDS="id" COMMENT="Foreign key to question table."/>
+            <KEY NAME="user_fk" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id" COMMENT="Foreign key to user table."/>
+        </KEYS>
+        </TABLE>
+    </TABLES>
+
+</XMLDB>

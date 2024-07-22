@@ -1,0 +1,62 @@
+/* styles.css */
+.cbadge {
+    display: inline-block;
+    padding: 0.2em .5em; /* Increase padding for larger badges */
+    font-size: 80%; /* Increase font size for larger text */
+    font-weight: 700;
+    line-height: 1.5; /* Adjust line height for better readability */
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.5rem; /* Increase border radius for a more rounded look */
+}
+.badge-final {
+    background-color: #173db8;
+    color: white;
+}
+.badge-grading {
+    background-color: #ffc107;
+    color: black;
+}
+.badge-submit {
+    background-color: #1b702f;
+    color: white;
+}
+.badge-process {
+    background-color: #6d1b70;
+    color: white;
+}
+
+/* filter select status grade */
+
+.filter-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.custom-select {
+    width: auto; /* Adjust width as needed */
+    padding: .375rem 1.75rem .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.custom-select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+}
+
+.custom-select:disabled {
+    background-color: #e9ecef;
+    opacity: 1;
+}
