@@ -23,13 +23,16 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+ defined('MOODLE_INTERNAL') || die();
 
-if ($hassiteconfig) {
-    $settings = new admin_settingpage('quiz_gradingcustomchatgpt_settings', new lang_string('pluginname', 'quiz_gradingcustomchatgpt'));
-
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($ADMIN->fulltree) {
-        // TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
-    }
-}
+ if ($hassiteconfig) { // Needs this condition or it won't work
+     $settings = new admin_settingpage('quiz_gradingcustomchatgpt', get_string('pluginname', 'quiz_gradingcustomchatgpt'));
+ 
+     $settings->add(new admin_setting_heading(
+         'quiz_gradingcustomchatgptsettings',
+         get_string('pluginname', 'quiz_gradingcustomchatgpt'),
+         get_string('settingsintro', 'quiz_gradingcustomchatgpt')
+     ));
+ 
+     $ADMIN->add('modsettings', $settings);
+ }

@@ -25,4 +25,20 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['alldoneredirecting'] = 'All selected attempts have been graded. Returning to the list of questions.';
+$string['alreadygraded'] = 'Already graded';
+$string['viewgraded'] = 'View graded';
+$string['alsoshowautomaticallygraded'] = 'Also show questions that have been graded automatically';
+$string['timefinish'] = 'Time Finish';
+$string['attempt'] = 'Attempt';
+$string['attemptid'] = 'Attempt {$a}';
+$string['attemptstograde'] = 'Attempts to grade';
+$string['automaticallygraded'] = 'Automatically graded';
+$string['studentpi'] = 'Student PI';
+
+$string['nogrades'] = 'No grades available';
+
 $string['pluginname'] = 'grade with chat gpt';
+
+$string['gradingcustomchatgpt'] = 'Grading custom Chatgpt';
+

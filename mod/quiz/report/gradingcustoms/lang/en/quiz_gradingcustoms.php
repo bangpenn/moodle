@@ -45,10 +45,6 @@ $string['grade'] = 'grade';
 $string['gradeall'] = 'grade all';
 $string['graded'] = '(graded)';
 $string['gradingcustoms'] = 'Manual grading custom';
-
-$string['gradingcustomsreport'] = 'Grading Customs Report';
-
-
 $string['grading:viewidnumber'] = 'See student idnumbers while grading';
 $string['grading:viewstudentnames'] = 'See student names while grading';
 $string['gradingall'] = 'All {$a} attempts on this question.';
