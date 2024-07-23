@@ -30,8 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  require_login();
  
  // Set up the page
-//  http://localhost/moodle/mod/quiz/report.php?id=11&mode=gradingcustomchatgpt
- $PAGE->set_url('/mod/quiz/report.php?id=11&mode=gradingcustomchatgpt');
+ $PAGE->set_url('/mod/quiz/report.php', ['id' => $id, 'mode' => $mode]);
  $PAGE->set_context(context_system::instance());
  $PAGE->set_title(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
  $PAGE->set_heading(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
@@ -78,15 +77,32 @@ if (optional_param('process', false, PARAM_BOOL)) {
      echo html_writer::start_tag('table', ['class' => 'generaltable']);
      echo html_writer::start_tag('tr');
      echo html_writer::tag('th', 'Question ID');
+     echo html_writer::tag('th', 'Question Text');
      echo html_writer::tag('th', 'User ID');
+     echo html_writer::tag('th', 'User Name');
+     echo html_writer::tag('th', 'Answer');
      echo html_writer::tag('th', 'Grade');
      echo html_writer::tag('th', 'Feedback');
      echo html_writer::end_tag('tr');
  
      foreach ($grades as $grade) {
+
+        $user = $DB->get_record('user', array('id' => $grade->user_id));
+
+        $user_fullname = $user ? $user->firstname . ' ' . $user->lastname : 'No name';
+
+        $question = $DB->get_record('question', array('id' =>  $grade->question_id));
+
+        $attempt = $DB->get_record('question_attempts', array('id' => $grade->question_attempt_id));
+        $answer = $attempt ? $attempt->responsesummary : 'No answer';
+
+
          echo html_writer::start_tag('tr');
          echo html_writer::tag('td', $grade->question_id);
+         echo html_writer::tag('td', $question ? $question->questiontext : 'noquestion');
          echo html_writer::tag('td', $grade->user_id);
+         echo html_writer::tag('td', $user_fullname);
+         echo html_writer::tag('td', $answer);
          echo html_writer::tag('td', $grade->grade_chatgpt);
          echo html_writer::tag('td', $grade->chatgpt_response);
          echo html_writer::end_tag('tr');
