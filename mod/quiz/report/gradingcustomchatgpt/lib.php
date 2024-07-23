@@ -73,7 +73,7 @@ class gradingcustomchatgpt {
 
         if ($answer) {
             // Sanitasi atau validasi jawaban jika perlu
-            $answer->answer = filter_var($answer->answer, FILTER_SANITIZE_STRING);
+            $answer->answer = filter_var($answer->answer, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             return $answer;
         } else {
             throw new Exception('No answer found for given question attempt ID and user ID.');
