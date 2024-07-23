@@ -134,7 +134,7 @@ function get_models() {
  * @param string usermessage: The text sent from the user
  * @param string airesponse: The text returned by the AI 
  */
-function log_message($usermessage, $airesponse, $context) {
+function log_message($usermessage, $airesponse, $context, $score = 1) {
     global $USER, $DB;
 
     if (!get_config('block_openai_chat', 'logging')) {
@@ -146,6 +146,7 @@ function log_message($usermessage, $airesponse, $context) {
         'usermessage' => $usermessage,
         'airesponse' => $airesponse,
         'contextid' => $context->id,
+        'score' => $score,
         'timecreated' => time()
     ]);
 }
@@ -210,5 +211,42 @@ function process_user_input($user_input, $api_key) {
         $ai_response = evaluate_using_ai($user_input);
         return $ai_response;
     }
+}
+
+
+function process_user_message($userid, $usermessage, $airesponse, $contextid) {
+    global $DB;
+
+    // Tentukan skor untuk setiap pesan
+    $score = 1; // Skor default untuk setiap pesan
+
+    // Menyimpan pesan ke database
+    $record = new stdClass();
+    $record->userid = $userid;
+    $record->usermessage = $usermessage;
+    $record->airesponse = $airesponse;
+    $record->contextid = $contextid;
+    $record->score = $score;
+    $record->timecreated = time();
+
+    // Masukkan record ke dalam tabel
+    $DB->insert_record('block_openai_chat_log', $record);
+
+    // Kembalikan skor sebagai indikator keaktifan
+    return $score;
+}
+
+
+function get_user_total_score($userid) {
+    global $DB;
+
+    $sql = "SELECT SUM(score) as totalscore
+            FROM {block_openai_chat_log}
+            WHERE userid = :userid";
+
+    $params = array('userid' => $userid);
+    $result = $DB->get_record_sql($sql, $params);
+
+    return $result ? $result->totalscore : 0;
 }
 
