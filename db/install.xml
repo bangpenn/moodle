@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/quiz/report/gradingcustoms/db" VERSION="20240603" COMMENT="XMLDB file for Moodle quiz_gradingcustoms plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="gradingform_customgraders" COMMENT="Grading information about a single grading for a single essay question submission.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="usageid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The grading usage this grade belongs to."/>
+        <FIELD NAME="slot" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="This is the item slot that is being graded"/>
+        <FIELD NAME="grader_main" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="grader_subs" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="grader_head" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="grade_main" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The numerical grade main teacher for this assignment submission."/>
+        <FIELD NAME="grade_subs" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The numerical grade substitute teacher for this assignment submission."/>
+        <FIELD NAME="grade_head" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The numerical grade head teacher for this assignment submission."/>
+        <FIELD NAME="grade_final" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The numerical final grade for this assignment submission."/>
+        <FIELD NAME="max_diff" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="The max difference grade between main teacher and substitute teacher."/>
+        <FIELD NAME="status" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The type of grade. 1 is final, 0 is intermediary"/>
+        <FIELD NAME="timestamp" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="This records when the grade was added and is also used for keeping the order of graders."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="The unique id for this grade."/>
+        <KEY NAME="grader_main" TYPE="foreign" FIELDS="grader_main" REFTABLE="user" REFFIELDS="id" COMMENT="The grader main this grade was added by."/>
+        <KEY NAME="grader_subs" TYPE="foreign" FIELDS="grader_subs" REFTABLE="user" REFFIELDS="id" COMMENT="The grader subs this grade was added by."/>
+        <KEY NAME="grader_head" TYPE="foreign" FIELDS="grader_head" REFTABLE="user" REFFIELDS="id" COMMENT="The grader head this grade was added by."/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
