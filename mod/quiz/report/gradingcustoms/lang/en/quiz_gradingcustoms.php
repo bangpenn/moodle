@@ -73,6 +73,9 @@ $string['totalmark'] = 'Total nilai';
 $string['totalmarkmain'] = 'Total nilai Main';
 $string['totalmarksubs'] = 'Total nilai Subs';
 $string['totalmarkhead'] = 'Total nilai Final';
+$string['totalactivityopenaichat'] = 'Total aktivitas Chat AI';
+$string['totalgradechatgpt'] = 'Total nilai Chatgpt';
+
 $string['status'] = 'Status';
 
 $string['statusfinal'] = '<span class="cbadge badge-final">Final grade</span>';

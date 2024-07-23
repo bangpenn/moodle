@@ -15,6 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 defined('MOODLE_INTERNAL') || die();
+require_once($CFG->dirroot . '/blocks/openai_chat/lib.php'); 
+require_once($CFG->dirroot . '/mod/quiz/report/gradingcustomchatgpt/lib.php');
+
 
 /**
  * Quiz report to help teachers manually grade questions by students.
@@ -162,9 +165,27 @@ class quiz_gradingcustoms_report extends report_base {
                 $row[] = $this->format_count_for_table($attempt, 'manuallygraded', 'updategrade', $attempt->status);
                 $row[] = $attempt->totalgrade;
             }
+            
+            // Tambahkan grade chatgpt aktivitas ke dalam baris data
+
+            $first_question = reset($attempt->questions);
+            $question_id = $first_question->questionid;
+
+            $chatgpt_grade = get_chatgpt_grade($attempt->userid, $question_id);
+            $formatted_grade = rtrim(rtrim(number_format($chatgpt_grade, 2), '0'), '.');
+            $row[] = $formatted_grade;
+
+             // Tambahkan skor aktivitas ke dalam baris data
+            $row[] = get_user_total_score($attempt->userid);
+            
+
             $row[] = $attempt->status;
+
             $data[] = $row;
         }
+
+
+
 
         if (empty($data)) {
             echo $OUTPUT->heading(get_string('nothingfound', 'quiz_gradingcustoms'));
@@ -184,6 +205,9 @@ class quiz_gradingcustoms_report extends report_base {
             $table->head[] = get_string('totalmarkmain', 'quiz_gradingcustoms');
             $table->head[] = get_string('totalmarksubs', 'quiz_gradingcustoms');
             $table->head[] = get_string('totalmarkhead', 'quiz_gradingcustoms');
+            $table->head[] = get_string('totalgradechatgpt', 'quiz_gradingcustoms');
+            $table->head[] = get_string('totalactivityopenaichat', 'quiz_gradingcustoms');
+
         } else {
             $table->head[] = get_string('totalmark', 'quiz_gradingcustoms');
         }
@@ -226,6 +250,9 @@ class quiz_gradingcustoms_report extends report_base {
         }
 
         echo html_writer::div($filteredTable, 'clearfix');
+        // echo '<pre>';
+        // print_r($attempt);
+        // echo '</pre>';
     }
 
     /**

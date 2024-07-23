@@ -185,6 +185,22 @@ class gradingcustomchatgpt {
 
         $this->save_chatgpt_grades($question_attempt_id, $question_data->question_id, $user_id, $grade, $feedback);
     }
+
+    
+    
+}
+
+function get_chatgpt_grade($userid, $question_id) {
+    global $DB;
+
+    $sql = "SELECT grade_chatgpt AS grade
+            FROM {gradingform_chatgptgrades}
+            WHERE user_id = :userid AND question_id = :question_id";
+
+    $params = ['userid' => $userid, 'question_id' => $question_id];
+    $result = $DB->get_record_sql($sql, $params);
+
+    return $result ? $result->grade : '-';
 }
 
 
