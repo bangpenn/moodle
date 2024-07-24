@@ -24,96 +24,106 @@ defined('MOODLE_INTERNAL') || die();
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
- require_once(__DIR__.'/../../../../config.php');
- require_once($CFG->dirroot . '/mod/quiz/report/gradingcustomchatgpt/lib.php');
- 
- require_login();
- 
- // Set up the page
- $PAGE->set_url('/mod/quiz/report.php', ['id' => $id, 'mode' => $mode]);
- $PAGE->set_context(context_system::instance());
- $PAGE->set_title(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
- $PAGE->set_heading(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
- 
- error_reporting(E_ALL);
- ini_set('display_errors', 1);
+require_once(__DIR__.'/../../../../config.php');
+require_once($CFG->dirroot.'/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/report/gradingcustomchatgpt/lib.php');
 
- echo $OUTPUT->header();
- 
- // Initialize grading custom ChatGPT class
- $grading = new gradingcustomchatgpt();
- 
-// Check if form is submitted
+require_login();
+
+// Set up the page
+$id = optional_param('id', 0, PARAM_INT);
+$mode = optional_param('mode', '', PARAM_ALPHA);
+$quiz_id = optional_param('quiz_id', 0, PARAM_INT);
+
+$PAGE->set_url('/mod/quiz/report.php', ['id' => $id, 'mode' => $mode]);
+$PAGE->set_context(context_system::instance());
+$PAGE->set_title(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
+$PAGE->set_heading(get_string('pluginname', 'quiz_gradingcustomchatgpt'));
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo $OUTPUT->header();
+
+// Fetch quizzes for search
+$quizzes = $DB->get_records_menu('quiz', null, 'name ASC', 'id, name');
+
+if (!$quizzes) {
+    echo $OUTPUT->notification(get_string('no_quizzes_found', 'quiz_gradingcustomchatgpt'), 'notifyproblem');
+} else {
+    // Display form to select quiz and process grades
+    echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url]);
+
+    // Search form
+    echo html_writer::start_tag('div', ['class' => 'search-form']);
+    echo html_writer::empty_tag('input', [
+        'type' => 'text',
+        'name' => 'quiz_search',
+        'placeholder' => get_string('search_quiz', 'quiz_gradingcustomchatgpt'),
+        'value' => optional_param('quiz_search', '', PARAM_TEXT)
+    ]);
+    echo html_writer::empty_tag('input', ['type' => 'submit', 'name' => 'search', 'value' => get_string('search', 'quiz_gradingcustomchatgpt')]);
+    echo html_writer::end_tag('div');
+
+    // Process form
+    echo html_writer::start_tag('div', ['class' => 'process-form']);
+    echo html_writer::select($quizzes, 'quiz_id', $quiz_id, ['' => get_string('select_quiz', 'quiz_gradingcustomchatgpt')]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'process', 'value' => '1']);
+    echo html_writer::empty_tag('input', ['type' => 'submit', 'value' => get_string('process_generate', 'quiz_gradingcustomchatgpt')]);
+    echo html_writer::end_tag('div');
+
+    echo html_writer::end_tag('form');
+}
+
+// Initialize grading custom ChatGPT class
+$grading = new gradingcustomchatgpt();
+
 if (optional_param('process', false, PARAM_BOOL)) {
-    $question_attempt_id = optional_param('question_attempt_id', 0, PARAM_INT);
-    $user_id = optional_param('user_id', 0, PARAM_INT);
-
-    // Debugging POST data
-    error_log("Received POST data: process = 1, question_attempt_id = $question_attempt_id, user_id = $user_id");
-
-    if ($question_attempt_id && $user_id) {
-        // Initialize grading custom ChatGPT class
-        $grading = new gradingcustomchatgpt();
-        $grading->process_student_answers($question_attempt_id, $user_id);
-        echo $OUTPUT->notification('Processing completed', 'notifysuccess');
+    if ($quiz_id) {
+        $grading->process_all_answers_for_quiz($quiz_id);
+        echo $OUTPUT->notification(get_string('processing_completed', 'quiz_gradingcustomchatgpt'), 'notifysuccess');
     } else {
-        echo $OUTPUT->notification('Missing question attempt ID or user ID.', 'notifyproblem');
+        echo $OUTPUT->notification(get_string('missing_quiz_id', 'quiz_gradingcustomchatgpt'), 'notifyproblem');
     }
 }
- 
- // Display the form
- echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url]);
- echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'process', 'value' => '1']);
- echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'question_attempt_id', 'placeholder' => 'Question Attempt ID']);
- echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'user_id', 'placeholder' => 'User ID']);
- echo html_writer::empty_tag('input', ['type' => 'submit', 'value' => 'Process']);
- echo html_writer::end_tag('form');
- 
- // Display the grading results
- global $DB;
- $grades = $DB->get_records('gradingform_chatgptgrades');
- 
- if ($grades) {
-     echo html_writer::start_tag('table', ['class' => 'generaltable']);
-     echo html_writer::start_tag('tr');
-     echo html_writer::tag('th', 'Question ID');
-     echo html_writer::tag('th', 'Question Text');
-     echo html_writer::tag('th', 'User ID');
-     echo html_writer::tag('th', 'User Name');
-     echo html_writer::tag('th', 'Answer');
-     echo html_writer::tag('th', 'Grade');
-     echo html_writer::tag('th', 'Feedback');
-     echo html_writer::end_tag('tr');
- 
-     foreach ($grades as $grade) {
 
-        $user = $DB->get_record('user', array('id' => $grade->user_id));
+if ($quizzes && $quiz_id) {
+    echo html_writer::start_tag('table', ['class' => 'generaltable']);
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('th', 'No');
+    echo html_writer::tag('th', 'Nama Siswa');
+    // echo html_writer::tag('th', 'Feedback');
+    echo html_writer::tag('th', 'Soal');
+    echo html_writer::tag('th', 'Jawaban Siswa');
+    echo html_writer::tag('th', 'Nilai ChatGPT');
+    echo html_writer::tag('th', 'Feedback');
+    echo html_writer::end_tag('tr');
 
+    $grades = $grading->fetch_grades_for_quiz($quiz_id);
+    // var_dump($grades);
+    foreach ($grades as $grade) {
+        $user = $DB->get_record('user', ['id' => $grade->user_id]);
         $user_fullname = $user ? $user->firstname . ' ' . $user->lastname : 'No name';
 
-        $question = $DB->get_record('question', array('id' =>  $grade->question_id));
-
-        $attempt = $DB->get_record('question_attempts', array('id' => $grade->question_attempt_id));
+        $question = $DB->get_record('question', ['id' => $grade->question_id]);
+        $attempt = $DB->get_record('question_attempts', ['id' => $grade->question_attempt_id]);
         $answer = $attempt ? $attempt->responsesummary : 'No answer';
 
+        // Note: Ensure $grade->chatgpt_response and $grade->grade_chatgpt are correctly populated by fetch_grades_for_quiz()
+        echo html_writer::start_tag('tr');
+        echo html_writer::tag('td', $grade->question_attempt_id); // Changed to question_attempt_id for better clarity
+        echo html_writer::tag('td', $user_fullname);
+        // echo html_writer::tag('td', isset($grade->chatgpt_response) ? $grade->chatgpt_response : 'No feedback');
+        echo html_writer::tag('td', isset($question->questiontext) ? $question->questiontext : 'No question');
+        echo html_writer::tag('td', $answer);
+        echo html_writer::tag('td', isset($grade->grade_chatgpt) ? $grade->grade_chatgpt : 'No grade');
+        echo html_writer::tag('td', isset($grade->chatgpt_response) ? $grade->chatgpt_response : 'No feedback');
+        echo html_writer::end_tag('tr');
+    }
+    echo html_writer::end_tag('table');
+} else {
+    echo html_writer::tag('p', get_string('no_quizzes_found', 'quiz_gradingcustomchatgpt'));
+}
 
-         echo html_writer::start_tag('tr');
-         echo html_writer::tag('td', $grade->question_id);
-         echo html_writer::tag('td', $question ? $question->questiontext : 'noquestion');
-         echo html_writer::tag('td', $grade->user_id);
-         echo html_writer::tag('td', $user_fullname);
-         echo html_writer::tag('td', $answer);
-         echo html_writer::tag('td', $grade->grade_chatgpt);
-         echo html_writer::tag('td', $grade->chatgpt_response);
-         echo html_writer::end_tag('tr');
-     }
-     echo html_writer::end_tag('table');
- } else {
-     echo html_writer::tag('p', get_string('nogrades', 'quiz_gradingcustomchatgpt'));
- }
- 
- // Debugging
- error_log(print_r($grades, true));
- 
- echo $OUTPUT->footer();
- 
+
+echo $OUTPUT->footer();

@@ -166,7 +166,7 @@ class quiz_gradingcustoms_report extends report_base {
                 $row[] = $attempt->totalgrade;
             }
             
-            // Tambahkan grade chatgpt aktivitas ke dalam baris data
+            // Tambahkan grade chatgpt ke dalam baris data
 
             $first_question = reset($attempt->questions);
             $question_id = $first_question->questionid;
@@ -250,9 +250,6 @@ class quiz_gradingcustoms_report extends report_base {
         }
 
         echo html_writer::div($filteredTable, 'clearfix');
-        // echo '<pre>';
-        // print_r($attempt);
-        // echo '</pre>';
     }
 
     /**
@@ -457,7 +454,7 @@ class quiz_gradingcustoms_report extends report_base {
                         $modifiedOutput = $this->hideCommentToRenderedQuestion($renderedQuestion);
                         $modifiedOutput = $this->processgradeRenderedHtml($modifiedOutput, $usageid);
                         echo $modifiedOutput;
-                    }
+                    } 
                 }
         }
 

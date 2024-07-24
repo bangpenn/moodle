@@ -284,34 +284,34 @@ if ($ADMIN->fulltree) {
 
 // Now, depending on whether any reports have their own settings page, add
 // the quiz setting page to the appropriate place in the tree.
-// if (empty($reportsbyname) && empty($rulesbyname)) {
-//     $ADMIN->add('modsettings', $quizsettings);
-// } else {
-//     $ADMIN->add('modsettings', new admin_category('modsettingsquizcat',
-//             get_string('modulename', 'quiz'), $module->is_enabled() === false));
-//     $ADMIN->add('modsettingsquizcat', $quizsettings);
+if (empty($reportsbyname) && empty($rulesbyname)) {
+    $ADMIN->add('modsettings', $quizsettings);
+} else {
+    $ADMIN->add('modsettings', new admin_category('modsettingsquizcat',
+            get_string('modulename', 'quiz'), $module->is_enabled() === false));
+    $ADMIN->add('modsettingsquizcat', $quizsettings);
 
-//     // Add settings pages for the quiz report subplugins.
-//     foreach ($reportsbyname as $strreportname => $report) {
-//         $reportname = $report;
+    // Add settings pages for the quiz report subplugins.
+    foreach ($reportsbyname as $strreportname => $report) {
+        $reportname = $report;
 
-//         $settings = new admin_settingpage('modsettingsquizcat'.$reportname,
-//                 $strreportname, 'moodle/site:config', $module->is_enabled() === false);
-//         include($CFG->dirroot . "/mod/quiz/report/$reportname/settings.php");
-//         if (!empty($settings)) {
-//             $ADMIN->add('modsettingsquizcat', $settings);
-//         }
-//     }
+        $settings = new admin_settingpage('modsettingsquizcat'.$reportname,
+                $strreportname, 'moodle/site:config', $module->is_enabled() === false);
+        include($CFG->dirroot . "/mod/quiz/report/$reportname/settings.php");
+        if (!empty($settings)) {
+            $ADMIN->add('modsettingsquizcat', $settings);
+        }
+    }
 
 //     // Add settings pages for the quiz access rule subplugins.
-//     foreach ($rulesbyname as $strrulename => $rule) {
-//         $settings = new admin_settingpage('modsettingsquizcat' . $rule,
-//                 $strrulename, 'moodle/site:config', $module->is_enabled() === false);
-//         include($CFG->dirroot . "/mod/quiz/accessrule/$rule/settings.php");
-//         if (!empty($settings)) {
-//             $ADMIN->add('modsettingsquizcat', $settings);
-//         }
-//     }
-// }
+    foreach ($rulesbyname as $strrulename => $rule) {
+        $settings = new admin_settingpage('modsettingsquizcat' . $rule,
+                $strrulename, 'moodle/site:config', $module->is_enabled() === false);
+        include($CFG->dirroot . "/mod/quiz/accessrule/$rule/settings.php");
+        if (!empty($settings)) {
+            $ADMIN->add('modsettingsquizcat', $settings);
+        }
+    }
+}
 
 $settings = null; // We do not want standard settings link.

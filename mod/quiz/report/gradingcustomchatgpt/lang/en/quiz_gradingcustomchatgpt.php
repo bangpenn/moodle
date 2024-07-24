@@ -38,7 +38,14 @@ $string['studentpi'] = 'Student PI';
 
 $string['nogrades'] = 'No grades available';
 
-$string['pluginname'] = 'grade with chat gpt';
+$string['pluginname'] = 'Penilaian berbasis ChatGPT';
+$string['search_quiz'] = 'Search Quiz';
+$string['search'] = 'Search';
+$string['select_quiz'] = 'Pilih Quiz';
+$string['process_generate'] = 'Generate grade';
+$string['processing_completed'] = 'Proses Generate Berhasil';
+$string['missing_quiz_id'] = 'Proses Generate Gagal';
+$string['no_quizzes_found'] = 'Tidak Ada Data Quiz';
 
 $string['gradingcustomchatgpt'] = 'Grading custom Chatgpt';
 

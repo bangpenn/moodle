@@ -41,6 +41,80 @@ function myplugin_extend_navigations(settings_navigation $settingsnav, navigatio
  * @return bool True on success, false on failure.
  */
 class gradingcustomchatgpt {
+    public function process_all_answers_for_quiz($quiz_id) {
+        global $DB;
+    
+        // Fetch all question attempts for the quiz
+        $sql = "
+            SELECT DISTINCT qa.id AS question_attempt_id, qa.questionid AS question_id, qas.userid AS user_id
+            FROM {question_attempts} qa
+            JOIN {question} q ON qa.questionid = q.id
+            JOIN {question_attempt_steps} qas ON qa.id = qas.questionattemptid
+            JOIN {question_usages} qu ON qu.id = qa.questionusageid
+            -- We need to identify how to connect `qu.id` to `quiz_id`
+            -- Assuming `quiz_id` can be linked through another table or relationship
+            -- If `quiz_id` is not directly available, more steps are required to determine how it connects
+            -- For now, omitting this part and focusing on the available tables
+            WHERE q.qtype = 'essay'
+            -- If you have a way to link `qu.id` to `quiz_id`, add that condition here
+        ";
+        $attempts = $DB->get_records_sql($sql);
+    
+        if (empty($attempts)) {
+            throw new Exception('No question attempts found for the given quiz ID.');
+        }
+    
+        foreach ($attempts as $attempt) {
+            try {
+                $this->process_student_answers($attempt->question_attempt_id, $attempt->user_id);
+            } catch (Exception $e) {
+                error_log('Error processing student answers: ' . $e->getMessage());
+                // Optionally, notify about the issue or handle it as needed
+            }
+        }
+    }
+    
+
+    function fetch_grades_for_quiz($quiz_id) {
+        global $DB;
+        
+        // SQL query to fetch the grades and feedback
+        $sql = "
+        SELECT DISTINCT
+            qa.id AS question_attempt_id,
+            qa.questionid AS question_id,
+            qus.userid AS user_id,
+            q.questiontext AS question_text,
+            qa.responsesummary AS user_answer,  
+            g.grade_chatgpt AS grade_chatgpt,
+            g.chatgpt_response AS chatgpt_response
+        FROM
+            mdl_question_attempts qa
+            JOIN mdl_question_attempt_steps qus ON qa.id = qus.questionattemptid
+            JOIN mdl_question_usages qu ON qu.id = qa.questionusageid
+            JOIN mdl_question q ON qa.questionid = q.id
+            LEFT JOIN mdl_gradingform_chatgptgrades g ON g.question_attempt_id = qa.id
+        WHERE
+            q.qtype = 'essay'
+            AND qus.state = 'complete'
+        LIMIT 25;";
+                
+        // Parameters for the SQL query
+        $params = ['quiz_id' => $quiz_id];
+        
+        // Execute the query and fetch results
+        $records = $DB->get_records_sql($sql, $params);
+        
+        return $records;
+    }
+    
+    
+    
+    
+    
+    
+
+
     protected function get_question_by_attempt_id($question_attempt_id) {
         global $DB;
 
@@ -81,8 +155,9 @@ class gradingcustomchatgpt {
     }
 
    // evaluate ditaruh disini
-   protected function evaluate_with_chatgpt($question, $answer) {
-        function parse_env_file($path) {
+   public function evaluate_with_chatgpt($question, $answer) {
+        if (!function_exists('parse_env_file')) {
+            function parse_env_file($path) {
             $vars = [];
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
@@ -93,6 +168,7 @@ class gradingcustomchatgpt {
                 $vars[trim($key)] = trim($value);
             }
             return $vars;
+            }
         }
         // Path to your .env file
         $env_file_path = __DIR__ . '/.env';
@@ -153,6 +229,15 @@ class gradingcustomchatgpt {
                 'feedback' => 'Evaluation failed.'
             );
         }
+    }
+
+    protected function parse_grade_from_feedback($feedback) {
+        // Extract grade from the feedback
+        if (preg_match('/\b(\d{1,3})\b/', $feedback, $matches)) {
+            $grade = intval($matches[1]);
+            return min(max($grade, 0), 100); // Ensure grade is between 0 and 100
+        }
+        return 0; // Default grade if none found
     }
 
     
