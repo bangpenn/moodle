@@ -44,21 +44,22 @@ class gradingcustomchatgpt {
     public function process_all_answers_for_quiz($quiz_id) {
         global $DB;
     
-        // Fetch all question attempts for the quiz
+        // Fetch all question attempts for the given quiz
         $sql = "
             SELECT DISTINCT qa.id AS question_attempt_id, qa.questionid AS question_id, qas.userid AS user_id
             FROM {question_attempts} qa
-            JOIN {question} q ON qa.questionid = q.id
             JOIN {question_attempt_steps} qas ON qa.id = qas.questionattemptid
-            JOIN {question_usages} qu ON qu.id = qa.questionusageid
-            -- We need to identify how to connect `qu.id` to `quiz_id`
-            -- Assuming `quiz_id` can be linked through another table or relationship
-            -- If `quiz_id` is not directly available, more steps are required to determine how it connects
-            -- For now, omitting this part and focusing on the available tables
-            WHERE q.qtype = 'essay'
-            -- If you have a way to link `qu.id` to `quiz_id`, add that condition here
+            WHERE qa.questionusageid IN (
+                SELECT qu.id
+                FROM {question_usages} qu
+                JOIN {quiz_attempts} qa2 ON qa2.uniqueid = qu.id
+                JOIN {quiz} qz ON qz.id = qa2.quiz
+                WHERE qz.id = :quiz_id
+            )
         ";
-        $attempts = $DB->get_records_sql($sql);
+    
+        $params = ['quiz_id' => $quiz_id];
+        $attempts = $DB->get_records_sql($sql, $params);
     
         if (empty($attempts)) {
             throw new Exception('No question attempts found for the given quiz ID.');
@@ -69,10 +70,11 @@ class gradingcustomchatgpt {
                 $this->process_student_answers($attempt->question_attempt_id, $attempt->user_id);
             } catch (Exception $e) {
                 error_log('Error processing student answers: ' . $e->getMessage());
-                // Optionally, notify about the issue or handle it as needed
+                // Handle errors as needed
             }
         }
     }
+
     
 
     function fetch_grades_for_quiz($quiz_id) {
@@ -94,22 +96,28 @@ class gradingcustomchatgpt {
             JOIN mdl_question_usages qu ON qu.id = qa.questionusageid
             JOIN mdl_question q ON qa.questionid = q.id
             LEFT JOIN mdl_gradingform_chatgptgrades g ON g.question_attempt_id = qa.id
+            JOIN mdl_quiz_attempts qa2 ON qa2.uniqueid = qu.id
+            JOIN mdl_quiz qz ON qz.id = qa2.quiz
+            JOIN mdl_course_modules cm ON cm.instance = qz.id
         WHERE
             q.qtype = 'essay'
             AND qus.state = 'complete'
+            AND qa2.quiz = :quiz_id
+        GROUP BY
+            qa.id, qa.questionid, qus.userid, q.questiontext, qa.responsesummary, g.grade_chatgpt, g.chatgpt_response
         LIMIT 25;";
-                
+        
         // Parameters for the SQL query
         $params = ['quiz_id' => $quiz_id];
         
         // Execute the query and fetch results
         $records = $DB->get_records_sql($sql, $params);
+
+        error_log(print_r($records, true)); // Debugging statement
+
         
         return $records;
     }
-    
-    
-    
     
     
     
@@ -271,6 +279,43 @@ class gradingcustomchatgpt {
         $this->save_chatgpt_grades($question_attempt_id, $question_data->question_id, $user_id, $grade, $feedback);
     }
 
+
+    function process_missing_grades_for_quiz($quiz_id) {
+        global $DB;
+    
+        // Fetch all question attempts with missing grades
+        $sql = "
+            SELECT DISTINCT qa.id AS question_attempt_id, qa.questionid AS question_id, qas.userid AS user_id
+            FROM {question_attempts} qa
+            JOIN {question_attempt_steps} qas ON qa.id = qas.questionattemptid
+            LEFT JOIN {gradingform_chatgptgrades} g ON g.question_attempt_id = qa.id
+            WHERE g.grade_chatgpt IS NULL
+              AND qa.questionusageid IN (
+                  SELECT qu.id
+                  FROM {question_usages} qu
+                  JOIN {quiz_attempts} qa2 ON qa2.uniqueid = qu.id
+                  JOIN {quiz} qz ON qz.id = qa2.quiz
+                  WHERE qz.id = :quiz_id
+              )
+        ";
+    
+        $params = ['quiz_id' => $quiz_id];
+        $attempts = $DB->get_records_sql($sql, $params);
+    
+        if (empty($attempts)) {
+            throw new Exception('No question attempts found for the given quiz ID.');
+        }
+    
+        foreach ($attempts as $attempt) {
+            try {
+                $this->process_student_answers($attempt->question_attempt_id, $attempt->user_id);
+            } catch (Exception $e) {
+                error_log('Error processing student answers: ' . $e->getMessage());
+                // Handle errors as needed
+            }
+        }
+    }
+
     
     
 }
@@ -285,8 +330,30 @@ function get_chatgpt_grade($userid, $question_id) {
     $params = ['userid' => $userid, 'question_id' => $question_id];
     $result = $DB->get_record_sql($sql, $params);
 
-    return $result ? $result->grade : '-';
+    return $result ? $result->grade : '';
 }
+
+function get_quiz_id_from_cmid($cmid) {
+    global $DB;
+    // Fetch the course module record for the given CMID
+    $cm = $DB->get_record('course_modules', ['id' => $cmid], 'instance');
+    if ($cm && $cm->instance) {
+        // Fetch the quiz record using the instance ID
+        $quiz = $DB->get_record('quiz', ['id' => $cm->instance], 'id');
+        if ($quiz) {
+            return $quiz->id;
+        }
+    }
+    return null; // Return null if no quiz is found
+}
+
+
+
+
+
+
+
+
 
 
 

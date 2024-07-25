@@ -170,9 +170,16 @@ class quiz_gradingcustoms_report extends report_base {
 
             $first_question = reset($attempt->questions);
             $question_id = $first_question->questionid;
-
+            
             $chatgpt_grade = get_chatgpt_grade($attempt->userid, $question_id);
-            $formatted_grade = rtrim(rtrim(number_format($chatgpt_grade, 2), '0'), '.');
+            
+            // Check if the grade is not available
+            if ($chatgpt_grade === null || $chatgpt_grade === '') {
+                $formatted_grade = 'No grade'; // Or any default value you prefer
+            } else {
+                $formatted_grade = rtrim(rtrim(number_format($chatgpt_grade, 2), '0'), '.');
+            }
+            
             $row[] = $formatted_grade;
 
              // Tambahkan skor aktivitas ke dalam baris data

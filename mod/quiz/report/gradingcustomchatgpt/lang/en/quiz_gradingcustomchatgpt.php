@@ -48,4 +48,9 @@ $string['missing_quiz_id'] = 'Proses Generate Gagal';
 $string['no_quizzes_found'] = 'Tidak Ada Data Quiz';
 
 $string['gradingcustomchatgpt'] = 'Grading custom Chatgpt';
+$string['regenerate_grades'] = 'Grading custom Chatgpt Ulang';
+$string['generate_missing_grades'] = 'Grading custom Chatgpt';
+$string['no_quiz_selected'] = 'Data Quiz belum dipilih';
+$string['all_grades_generated'] = 'Soal sudah dinilai semua';
+$string['some_grades_missing'] = 'Soal belum dinilai semua';
 
