@@ -74,7 +74,7 @@ $string['totalmarkmain'] = 'Total nilai Main';
 $string['totalmarksubs'] = 'Total nilai Subs';
 $string['totalmarkhead'] = 'Total nilai Final';
 $string['totalactivityopenaichat'] = 'Total aktivitas Chat AI';
-$string['totalgradechatgpt'] = 'Total nilai Chatgpt';
+$string['totalgradechatgpt'] = 'Total nilai Automatis';
 
 $string['status'] = 'Status';
 

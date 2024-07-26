@@ -26,39 +26,44 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings = new admin_settingpage('local_aiquestions_settings', new lang_string('pluginname', 'local_aiquestions'));
+    $settings = new admin_settingpage('local_pptgenerator_settings', new lang_string('pluginname', 'local_pptgenerator'));
 
-    // OpenAI key.
-    $settings->add( new admin_setting_configpasswordunmask(
-        'local_aiquestions/key',
-        get_string('openaikey', 'local_aiquestions'),
-        get_string('openaikeydesc', 'local_aiquestions'),
-        '', PARAM_TEXT, 50
+    // Title
+    $settings->add(new admin_setting_configtext(
+        'local_pptgenerator/title',
+        get_string('ppttitle', 'local_pptgenerator'),
+        get_string('ppttitledesc', 'local_pptgenerator'),
+        '', PARAM_TEXT
     ));
 
-    // Number of tries.
-    $settings->add( new admin_setting_configtext(
-        'local_aiquestions/numoftries',
-        get_string('numoftriesset', 'local_aiquestions'),
-        get_string('numoftriesdesc', 'local_aiquestions'),
-        10, PARAM_INT, 10
+    // Content
+    $settings->add(new admin_setting_configtextarea(
+        'local_pptgenerator/content',
+        get_string('pptcontent', 'local_pptgenerator'),
+        get_string('pptcontentdesc', 'local_pptgenerator'),
+        '', PARAM_TEXT
     ));
 
-    // Language.
-    $languages = get_string_manager()->get_list_of_languages();
-    asort($languages);
+    // Outline
+    $settings->add(new admin_setting_configtextarea(
+        'local_pptgenerator/outline',
+        get_string('pptoutline', 'local_pptgenerator'),
+        get_string('pptoutlinedesc', 'local_pptgenerator'),
+        '', PARAM_TEXT
+    ));
+
+    // Template
+    $templates = array(
+        'default' => get_string('template_default', 'local_pptgenerator'),
+        'business' => get_string('template_business', 'local_pptgenerator'),
+        'education' => get_string('template_education', 'local_pptgenerator')
+    );
     $settings->add(new admin_setting_configselect(
-        'local_aiquestions/language',
-        get_string('language', 'local_aiquestions'),
-        get_string('languagedesc', 'local_aiquestions'),
-        'en', $languages
+        'local_pptgenerator/template',
+        get_string('ppttemplate', 'local_pptgenerator'),
+        get_string('ppttemplatedesc', 'local_pptgenerator'),
+        'default', $templates
     ));
-
 
     $ADMIN->add('localplugins', $settings);
-
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($ADMIN->fulltree) {
-        // TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
-    }
 }

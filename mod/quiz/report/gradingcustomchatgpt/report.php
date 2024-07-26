@@ -114,6 +114,8 @@ foreach ($grades as $grade) {
     $attempt = $DB->get_record('question_attempts', ['id' => $grade->question_attempt_id]);
     $answer = $attempt ? $attempt->responsesummary : 'No answer';
 
+    // var_dump($grades);
+
     echo html_writer::start_tag('tr');
     echo html_writer::tag('td', $i++);
     echo html_writer::tag('td', $user_fullname);
@@ -126,39 +128,37 @@ foreach ($grades as $grade) {
 
 echo html_writer::end_tag('tbody');
 echo html_writer::end_tag('table');
+error_log(print_r($grades, true));
 
 echo $OUTPUT->footer();
-error_log('Fetching grades for quiz ID: ' . $quiz_id);
 
 ?>
-<!-- <script src="./js/jquery-3.6.0.min.js"></script> -->
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script type="text/javascript">
 function confirmGenerateGrades() {
     if (confirm("Some grades are missing. Do you want to generate missing grades?")) {
         $.ajax({
-            url: '<?php echo $PAGE->url; ?>',
+            url: '<?php echo $PAGE->url; ?>&mode=gradingcustomchatgpt&ajax=1&generate=1',
             type: 'POST',
             data: {
                 quiz_id: $('input[name="quiz_id"]').val(),
-                generate: '1',
-                ajax: '1'
             },
             success: function(response) {
-                console.log('Response received:', response); // Debugging
+                console.log('Response received:', response);
 
                 try {
-                    const data = JSON.parse(response);
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
                     if (data.status === 'success') {
-                        updateTable(data.grades);
+                        updateTableWithLatestData($('input[name="quiz_id"]').val());
                         alert('Grades generated successfully');
                     } else {
                         alert('Error: ' + data.message);
                     }
                 } catch (e) {
                     console.error('Failed to parse JSON response:', e);
-                    console.error('Response received:', response); // Log the raw response for debugging
+                    console.error('Response received:', response); 
                     alert('An error occurred while processing the request.');
                 }
             },
@@ -177,27 +177,25 @@ function confirmGenerateGrades() {
 function confirmRegenerateGrades() {
     if (confirm("All grades are already generated. Do you want to regenerate grades?")) {
         $.ajax({
-            url: '<?php echo $PAGE->url; ?>',
+            url: '<?php echo $PAGE->url; ?>&mode=gradingcustomchatgpt&ajax=1&regenerate=1',
             type: 'POST',
             data: {
                 quiz_id: $('input[name="quiz_id"]').val(),
-                regenerate: '1',
-                ajax: '1'
             },
             success: function(response) {
-                console.log('Response received:', response); // Debugging
+                console.log('Response received:', response); 
 
                 try {
-                    const data = JSON.parse(response);
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
                     if (data.status === 'success') {
-                        updateTable(data.grades);
+                        updateTableWithLatestData($('input[name="quiz_id"]').val());
                         alert('Grades regenerated successfully');
                     } else {
                         alert('Error: ' + data.message);
                     }
                 } catch (e) {
                     console.error('Failed to parse JSON response:', e);
-                    console.error('Response received:', response); // Log the raw response for debugging
+                    console.error('Response received:', response); 
                     alert('An error occurred while processing the request.');
                 }
             },
@@ -213,20 +211,54 @@ function confirmRegenerateGrades() {
     }
 }
 
+function updateTableWithLatestData(quizId) {
+    $.ajax({
+        url: '<?php echo $PAGE->url; ?>&mode=gradingcustomchatgpt&ajax=1',
+        type: 'GET',
+        data: {
+            quiz_id: quizId
+        },
+        success: function(response) {
+            console.log('Response received for table update:', response);
+
+            try {
+                // Jika respons berupa objek, pastikan data valid dan dalam format JSON
+                const data = typeof response === 'string' ? JSON.parse(response) : response;
+                if (data.status === 'success') {
+                    updateTable(data.grades);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                console.error('Failed to parse JSON response:', e);
+                console.error('Response received:', response);
+                alert('An error occurred while processing the request.');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', status, error);
+            alert('An error occurred: ' + error);
+            console.error('Response:', xhr.responseText);
+        }
+    });
+}
+
+
 function updateTable(grades) {
     // Update the table with grades data
     let tableBody = $('table tbody');
     tableBody.empty(); // Clear the existing table content
 
     $.each(grades, function(key, grade) {
+        // console.log(grades);
+
         let row = `<tr>
-            <td>${grade.question_attempt_id}</td>
-            <td>${grade.user_id}</td>
-            <td>${grade.question_id}</td>
-            <td>${grade.question_text}</td>
-            <td>${grade.responsesummary}</td>
-            <td>${grade.grade_chatgpt}</td>
-            <td>${grade.chatgpt_response}</td>
+            <td>${key + 1}</td>
+            <td>${grade.user_fullname || 'N/A'}</td>
+            <td>${grade.question_text || 'N/A'}</td>
+            <td>${grade.user_answer || 'N/A'}</td>
+            <td>${grade.grade_chatgpt || 'N/A'}</td>
+            <td>${grade.chatgpt_response || 'N/A'}</td>
         </tr>`;
         tableBody.append(row);
     });
